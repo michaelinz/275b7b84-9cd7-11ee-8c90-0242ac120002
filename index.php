@@ -11,6 +11,10 @@ $studentId = trim(fgets(STDIN));
 echo "Report to generate (1 for Diagnostic, 2 for Progress, 3 for Feedback): ";
 $reportType = trim(fgets(STDIN));
 
-// Initialize Controller
-$controller = new ReportController();
-echo $controller->generateReport($studentId, $reportType);
+echo processInput($studentId, $reportType);
+
+
+function processInput($studentId, $reportType) {
+    $controller = new ReportController();
+    return $controller->generateReport($studentId, $reportType);
+}

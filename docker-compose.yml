@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+    command: php /app/index.php
+    stdin_open: true 
+    tty: true        
+  test:
+    build: .
+    volumes:
+      - .:/app
+    command: composer run test
