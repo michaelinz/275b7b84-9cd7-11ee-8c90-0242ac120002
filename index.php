@@ -1,5 +1,6 @@
 <?php
 
+use App\Controllers\ReportController;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -10,3 +11,6 @@ $studentId = trim(fgets(STDIN));
 echo "Report to generate (1 for Diagnostic, 2 for Progress, 3 for Feedback): ";
 $reportType = trim(fgets(STDIN));
 
+// Initialize Controller
+$controller = new ReportController();
+echo $controller->generateReport($studentId, $reportType);
