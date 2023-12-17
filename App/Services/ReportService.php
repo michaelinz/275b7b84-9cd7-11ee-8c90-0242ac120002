@@ -6,6 +6,7 @@ use App\Models\Assessment;
 use App\Models\Question;
 use App\Models\Response;
 use App\Utils\Utils;
+use App\Resources\Resource;
 
 class ReportService
 {
@@ -16,7 +17,6 @@ class ReportService
     public function __construct()
     {
     }
-
 
     public function createReport($studentId, $reportType)
     {
@@ -40,7 +40,6 @@ class ReportService
 
     private function createDiagnosticReport(Student $student)
     {
-
         $res = $student->getStudentStudentResponses();
 
         usort($res, function ($a, $b) {
@@ -78,19 +77,11 @@ class ReportService
             }
         }
 
-        $strandText = '';
-        foreach ($strandGroups as $strandName => $strandCounts) {
-            $strandText .= $strandName . ': ' . $strandCounts['correct'] . ' out of ' . $strandCounts['total'] . ' correct ' . "\n";
-        }
-        $lastResponse = $res[0];
-
-        return  $student->getName() . ' recently completed '.$assessment->name.' assessment on ' . Utils::parseTime($lastResponse->completed) . "\n" .
-            'He got ' . $lastResponse->results['rawScore'] . ' questions right out of ' . count($lastResponse->responses) . '. ' . 'Details by strand given below: ' . "\n" . "\n" . $strandText;
+        return Resource::DiagnosticReportResource(student: $student, assessment: $assessment, lastStudentResponse: $res[0], questionByStrands: $strandGroups);
     }
 
     private function createProgressReport(Student $student)
     {
-
         $res = $student->getStudentStudentResponses();
 
         $res = array_filter($res, function ($item) {
@@ -106,14 +97,7 @@ class ReportService
 
         $assessment = $res[0]->getStudentResponseAssessments();
 
-        $scoreTexts = '';
-        foreach ($res as $response) {
-            $scoreTexts .= 'Date: ' . Utils::praseDate($response->assigned) . ', Raw Score: ' . $response->results['rawScore'] . ' out of ' . count($response->responses) . "\n";
-        }
-
-        return $student->getName() . ' has completed ' . $assessment->name . ' assessment ' . count($res) . ' times in total. Date and raw score given below:' . "\n" . "\n" .
-            $scoreTexts . "\n" .
-            $student->getName() . ' got ' . (end($res)->results['rawScore'] - $res[0]->results['rawScore']) . ' more correct in the recent completed assessment than the oldest';
+        return Resource::ProgressReportResource(student:$student, assessment:$assessment, studentResponses: $res);
     }
 
     private function createFeedbackReport(Student $student)
@@ -132,54 +116,7 @@ class ReportService
 
         $assessment = $res[0]->getStudentResponseAssessments();
 
-        $questionText = '';
-        foreach ($responseWithQuestions as $question) {
-            if ($question['response'] == $question['config']['key'] )  { 
-                continue;
-            }
-            $questionText .= 'Question: ' . $question['stem'] . "\n" .
-                'Your answer: ' . $this->getLabel($question)  . ' with value ' . $this->getValue($question)  . "\n" .
-                'Right answer: ' . $this->getRightLabel($question) . ' with value ' . $this->getRightValue($question) . "\n" .
-                'Hint: ' . $question['config']['hint'] . "\n" . "\n";
-        }
-
-        return $student->getName() . ' recently completed ' . $assessment->name . ' assessment on ' . Utils::parseTime($res[0]->completed) . "\n" .
-            'He got ' . $res[0]->results['rawScore'] . ' questions right out of ' . count($res[0]->responses) . '. Feedback for wrong answers given below' . "\n" . "\n" .
-            $questionText;
-
-
+        return Resource::FeedbackReportResource(student:$student, assessment:$assessment, studentResponses: $res, lastResponseWithQuestions: $responseWithQuestions);
     }
 
-    private function getLabel($q){
-
-        foreach ($q['config']['options'] as $option){ 
-            if ($option['id'] == $q['response']){ 
-                return $option['label'];
-            }
-        }
-    }
-    private function getValue($q){
-
-        foreach ($q['config']['options'] as $option){ 
-            if ($option['id'] == $q['response']){ 
-                return $option['value'];
-            }
-        }
-    }
-    private function getRightLabel($q){
-
-        foreach ($q['config']['options'] as $option){ 
-            if ($option['id'] == $q['config']['key']){ 
-                return $option['label'];
-            }
-        }
-    }
-    private function getRightValue($q){
-
-        foreach ($q['config']['options'] as $option){ 
-            if ($option['id'] == $q['config']['key']){ 
-                return $option['value'];
-            }
-        }
-    }
 }
